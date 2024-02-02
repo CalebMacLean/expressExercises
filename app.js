@@ -7,6 +7,10 @@ function logBug(title, val, idx = null) {
     }
 }
 
+// General helper functions
+function findMean(str) {
+
+}
 // Imports & Configurations
 const express = require('express');
 const CalcError = require('./calcError'); 
@@ -38,10 +42,10 @@ app.get('/mean', (req, res, next) => {
         }
         // find mean with sum
         const mean = sum / a.length;
-        return res.json({response : {
+        return {response : {
             operation : "mean",
             value : mean
-        }});
+        }};
     }
     catch(err) {
         return next(err);
@@ -82,35 +86,57 @@ app.get('/median', (req, res, next) => {
 
 // Mode Route
 app.get('/mode', (req, res, next) => {
-    // store query string
-    const nums = req.query.nums;
-    // check that nums is included
-    if(!nums) throw new CalcError("Nums are required.", 400);
-    // remove ,
-    const a = nums.split(',');
-    // create number counter object
-    const nCount = {};
-    let mode = 0;
-    // loop through arr adding frequency to number count obj
-    for(let i = 0; i < a.length; i++) {
-        // store current val
-        let curr = Number(a[i]);
-        // check that curr is a number
-        if(!curr) throw new CalcError(`${a[i]} is not a number`, 400);
-        // add true val to numCount obj if this is the first time num has been checked
-        if(nCount[a[i]]) {
-            continue;
-        } else {
-            nCount[a[i]] = true;
-            let freq = a.filter((x) => x === a[i]).length;
-            mode = mode < freq ? curr : mode;
+    try{
+        // store query string
+        const nums = req.query.nums;
+        // check that nums is included
+        if(!nums) throw new CalcError("Nums are required.", 400);
+        // remove ,
+        const a = nums.split(',');
+        // create number counter object
+        const nCount = {};
+        // iterate through the array and count occurrences of each num
+        a.forEach(x => {
+            let num = Number(x);
+            // throw err if an non number is included in nums
+            if(typeof num !== 'number') throw new CalcError(`${x} is not a number.`, 400);
+            if(nCount[x] === undefined) {
+                nCount[x] = 1;
+            } else {
+                nCount[x]++;
+            }
+        });
+        // find the number(s) w/ highest count
+        let mode = [];
+        let maxCount = 0;
+        // iterate through nCount to find mode(s)
+        for(let freq in nCount) {
+            if(nCount[freq] > maxCount) {
+                mode = [Number(freq)];
+                maxCount = nCount[freq];
+            } else if(nCount[freq] === maxCount) {
+                mode.push(Number(freq));
+            }
         }
+        let result;
+        if(mode.length === 1) {
+            result = mode[0];
+        } else {
+            result = mode;
+        }
+        // send JSON response with mode val
+        return res.json({response : {
+            operation : "mode",
+            value : result
+        }});
     }
-    // send JSON response with mode val
-    return res.json({response : {
-        operation : "mode",
-        value : mode
-    }});
+    catch(err) {
+        next(err);
+    }
+})
+
+app.get('/all', (req, res, next) => {
+
 })
 // Error Handlers
 
